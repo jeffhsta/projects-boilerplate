@@ -1,4 +1,4 @@
-# Applications boilerplace
+# Projects boilerplace
 
 This repo has a few applications boiler which may cover what I use or wish to use.
 
