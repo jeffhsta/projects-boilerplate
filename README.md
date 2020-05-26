@@ -1,6 +1,14 @@
-# JavaScript - TypeScript template applications
+# Applications boilerplace
 
-This repo has a few applications templates which may core the most usage of
-JavaScript and TypeScript (at least for me).
+This repo has a few applications boiler which may cover what I use or wish to use.
 
-The goal is to have a scenario for AWS lamdbda functions and Dockerized applications.
+The stacks covered already are:
+
+- AWS lambda functions with TypeScript
+- Express with Typescript
+
+Wish but still missing:
+
+- Elixir with Cowboy, Ecto, ExMachina, Mox (without Phoenix)
+- Kotlin with Ktor
+- AWS CDK for ECS setup
