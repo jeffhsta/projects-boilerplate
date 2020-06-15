@@ -1,0 +1,93 @@
+service:
+  name: aws-lambda-typescript
+
+plugins:
+  - serverless-webpack
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, "dev"}
+  region: us-east-1
+  versionFunctions: false
+  apiGateway:
+    minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
+  environment:
+    STAGE: ${opt:stage, "dev"}
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - dynamodb:*
+      Resource:
+        - arn:aws:dynamodb:us-east-1:*:table/*
+    - Effect: "Allow"
+      Action:
+        - cloudwatch:*
+      Resource: "*"
+
+custom:
+  stages:
+    - dev
+    - staging
+    - production
+
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+    packager: yarn
+
+functions:
+  http-lambda:
+    handler: src/event-handlers/http.handler
+    events:
+      - http:
+          get: "/"
+
+  sqs-lambda:
+    handler: src/event-handlers/sqs.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - MyQueue
+              - Arn
+          batchSize: 1
+
+  schedule-lambda:
+    handler: src/event-handlers/schedule.handler
+    events:
+      - schedule: cron(0 12 ? * MON-FRI *)
+
+resources:
+  Resources:
+    AccountsTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:service}-${self:provider.stage}-Users
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    MyQueue:
+      Type: AWS::SQS::Queue
+      DeletionPolicy: Retain
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-my-queue
+        VisibilityTimeout: 60
+        RedrivePolicy:
+          maxReceiveCount: 1
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - MyQueueDLQ
+              - Arn
+
+    MyQueueDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-my-queue-dlq
